@@ -1,3 +1,315 @@
+# Content Decline Prioritization — Machine Learning Capstone
+
+## Overview
+
+This project uses machine learning to help prioritize content that shows an observed decline in search impressions.
+
+The goal is to support content-review teams by identifying which records should be reviewed first. The model is a **decision-support tool**: a higher score means the record is ranked as more likely to be declining, but it does not guarantee future decline or that a content refresh will improve performance.
+
+The project was built as part of the FlyRank ML Internship.
+
+## Who This Is For
+
+This project is designed for:
+
+* SEO and content teams that need to prioritize content reviews
+* ML practitioners evaluating model generalization
+* Employers or reviewers interested in practical machine-learning workflows
+* Researchers interested in leakage-aware validation and ranking-based evaluation
+
+---
+
+## Research Question
+
+> Can search content that is likely to experience an impression decline be identified early enough to help prioritize content-review and refresh efforts, and does the model generalize to clients that were not seen during training?
+
+A major focus of the project is comparing a standard random row split with a stricter **client-grouped split**, where the test clients are completely unseen during training.
+
+---
+
+## Dataset
+
+The prepared dataset contains:
+
+* **30,000 records**
+* **32 clients**
+* **52 columns**
+* **26 model features**
+* **16,262 declining records**
+* **13,738 non-declining records**
+* **54.21% declining records**
+
+Records were filtered to include content with more than 0 90-day impressions and at least 90 days of age. Duplicate `content_id` records were removed.
+
+The target label is:
+
+```text
+is_declining_label = 1 when trend_direction == "down"
+is_declining_label = 0 otherwise
+```
+
+Identifiers such as `content_id` and `client_id` were retained for grouping and analysis but were not used as model features.
+
+The label-defining fields `trend_direction` and `trend_pct` were excluded from the model features to avoid direct leakage.
+
+No client names or private search queries are included in this project.
+
+---
+
+## Methodology
+
+The project evaluates the model using two validation strategies.
+
+### 1. Random Row Split
+
+Training and test records are randomly divided.
+
+* Training records: **24,000**
+* Test records: **6,000**
+* Shared clients: **31**
+* ROC-AUC: **0.7106**
+
+### 2. Client-Grouped Split
+
+The primary evaluation uses clients as groups. Entire clients are held out from training so that the test set contains clients the model never saw during training.
+
+* Training records: **23,837**
+* Test records: **6,163**
+* Training clients: **25**
+* Unseen test clients: **7**
+* Shared clients: **0**
+* ROC-AUC: **0.6157**
+
+This grouped evaluation is more useful for understanding how the approach behaves when applied to previously unseen clients.
+
+---
+
+## Evaluation Results
+
+| Evaluation                       |      Result |
+| -------------------------------- | ----------: |
+| Random-split ROC-AUC             |  **0.7106** |
+| Client-grouped ROC-AUC           |  **0.6157** |
+| Random baseline                  |  **0.5000** |
+| P@20                             |    **0.70** |
+| P@50                             |    **0.72** |
+| P@100                            |    **0.70** |
+| Grouped vs random AUC difference | **-0.0949** |
+
+For the client-grouped test set:
+
+* **14 of the top 20** predictions were declining records.
+* **36 of the top 50** predictions were declining records.
+* **70 of the top 100** predictions were declining records.
+
+The difference between random-split and client-grouped performance shows why validation design matters. Sharing clients between training and test data can produce a stronger-looking result than evaluating on completely unseen clients.
+
+---
+
+## Leakage Check
+
+A deliberate leakage test was also performed.
+
+When a label-related feature was intentionally allowed into the model, ROC-AUC reached **1.00**.
+
+After removing the leakage source, the client-grouped evaluation returned to **0.6157**.
+
+This check was used to verify that the reported performance was not simply caused by direct access to information defining the target.
+
+---
+
+## Simple Architecture
+
+```text
+                 FlyRank Dataset
+                       |
+                       v
+              Feature Preparation
+                       |
+                       v
+          Processed Feature Dataset
+                       |
+                       v
+              Train ML Classifier
+                       |
+          +------------+------------+
+          |                         |
+          v                         v
+   Random Row Split        Client-Grouped Split
+          |                         |
+          v                         v
+      Evaluation              Unseen Clients
+          |                         |
+          +------------+------------+
+                       |
+                       v
+              Ranking / Evaluation
+                       |
+                       v
+          Prioritize Content Review
+```
+
+---
+
+## Repository Structure
+
+```text
+capstone/
+├── .github/
+│   └── workflows/
+├── data/
+│   └── raw/
+├── docs/
+├── notebooks/
+│   └── capstone.ipynb
+├── outputs/
+├── README.md
+└── LICENSE
+```
+
+The main analysis is available in:
+
+```text
+notebooks/capstone.ipynb
+```
+
+---
+
+## How to Reproduce
+
+### Requirements
+
+Python 3.10+ is recommended.
+
+Install the project dependencies:
+
+```bash
+pip install pandas numpy scikit-learn matplotlib seaborn jupyter
+```
+
+### Clone the repository
+
+```bash
+git clone https://github.com/qurban-12/capstone.git
+cd capstone
+```
+
+### Run the notebook
+
+Start Jupyter:
+
+```bash
+jupyter notebook
+```
+
+Open:
+
+```text
+notebooks/capstone.ipynb
+```
+
+Run the notebook from top to bottom.
+
+The notebook contains the research question, data preparation, methodology, evaluation, limitations, recommendations, and reproducibility information.
+
+---
+
+## Usage
+
+The model is intended to help prioritize content for human review.
+
+A practical workflow is:
+
+```text
+Model scores content
+        ↓
+Rank records by score
+        ↓
+Review highest-priority records
+        ↓
+Investigate possible causes
+        ↓
+Decide whether a refresh is appropriate
+        ↓
+Monitor results
+```
+
+The model should **not** automatically publish, delete, rewrite, or refresh content.
+
+---
+
+## Limitations
+
+### 1. Observed decline vs future prediction
+
+The target represents an **observed decline** rather than a strictly future outcome.
+
+The available 90-day aggregate inputs can overlap with recent or previous 30-day windows used to define the label. Therefore, this project should not be described as a strict future forecasting system.
+
+### 2. Generalization
+
+Performance decreases from **0.7106 ROC-AUC** on the random split to **0.6157 ROC-AUC** on completely unseen clients.
+
+This indicates that performance can change when the model encounters clients that were not represented during training.
+
+### 3. False predictions
+
+On the grouped test set, the model produced:
+
+* **3,014 false positives**
+* **3,149 false negatives**
+
+Therefore, model predictions should be reviewed by humans rather than treated as guaranteed classifications.
+
+### 4. Dataset scope
+
+The evaluation is based on the available internship dataset and its feature distribution. Performance may differ on another dataset, time period, or group of clients.
+
+### 5. Decision support only
+
+The model provides prioritization signals. It does not determine whether a content refresh will succeed.
+
+---
+
+## Design Decision
+
+The main design decision was to use a **client-grouped evaluation** in addition to a standard random split.
+
+A random split is useful as a reference, but it allows the same clients to appear in both training and testing. Grouping by client creates a stricter test of generalization to unseen clients.
+
+For this reason, the client-grouped ROC-AUC of **0.6157** is the primary result emphasized in this project.
+
+---
+
+## AI Use Disclosure
+
+I used AI tools, including Claude and ChatGPT, during development for assistance with code structure, debugging, documentation, and wording. I personally checked the implementation, evaluation logic, results, leakage checks, limitations, and final project claims against the notebook and outputs.
+
+---
+
+## Reproducibility
+
+The complete project repository contains the analysis notebook and project artifacts.
+
+The research paper is available here:
+
+**https://qurban-12.github.io/ML_internship_Qurban/paper/**
+
+The project is designed so that the main analysis can be reviewed through the notebook and the documented methodology and results.
+
+---
+
+## Data Credit
+
+Built on the FlyRank ML Internship dataset.
+
+---
+
+## License
+
+See the repository `LICENSE` file for licensing information.
+
+
 # FlyRank ML Internship — Starter Repo
 
 **Applied Search Intelligence: Google Search Ranking & Discoverability**
