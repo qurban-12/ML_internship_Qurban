@@ -154,18 +154,25 @@ This check was used to verify that the reported performance was not simply cause
 ## Repository Structure
 
 ```text
-capstone/
+ML_internship_Qurban/
 ├── .github/
 │   └── workflows/
 ├── data/
 │   └── raw/
 ├── docs/
 ├── notebooks/
-│   └── capstone.ipynb
 ├── outputs/
+├── paper/
+├── scripts/
+├── skills/
+├── submission/
+├── work/
+│   └── notebooks/
+│       └── capstone.ipynb
 ├── README.md
+├── SETUP.md
+├── requirements.txt
 └── LICENSE
-```
 
 The main analysis is available in:
 
