@@ -317,7 +317,8 @@ Built on the FlyRank ML Internship dataset.
 See the repository `LICENSE` file for licensing information.
 
 
-# FlyRank ML Internship — Starter Repo
+# FlyRank Internship Resources
+The following section contains the original FlyRank internship resources, setup guidance, assignment notebooks, and data-safety information used during the internship.
 
 **Applied Search Intelligence: Google Search Ranking & Discoverability**
 
