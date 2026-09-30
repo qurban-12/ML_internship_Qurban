@@ -186,7 +186,7 @@ work/notebooks/capstone.ipynb
 
 ### Requirements
 
-Python 3.10+ is recommended.
+Use a Python environment compatible with the dependencies listed in `requirements.txt`.
 
 Install the project dependencies:
 
