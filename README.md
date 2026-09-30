@@ -184,14 +184,14 @@ Python 3.10+ is recommended.
 Install the project dependencies:
 
 ```bash
-pip install pandas numpy scikit-learn matplotlib seaborn jupyter
+pip install -r requirements.txt
 ```
 
 ### Clone the repository
 
 ```bash
-git clone https://github.com/qurban-12/capstone.git
-cd capstone
+git clone https://github.com/qurban-12/ML_internship_Qurban.git
+cd ML_internship_Qurban
 ```
 
 ### Run the notebook
