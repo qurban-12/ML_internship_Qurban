@@ -205,7 +205,7 @@ jupyter notebook
 Open:
 
 ```text
-notebooks/capstone.ipynb
+work/notebooks/capstone.ipynb
 ```
 
 Run the notebook from top to bottom.
