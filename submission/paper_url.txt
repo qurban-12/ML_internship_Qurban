@@ -1,1 +1,1 @@
-PASTE-YOUR-DEPLOYED-PAPER-URL-HERE
+https://qurban-12.github.io/ML_internship_Qurban/paper/
