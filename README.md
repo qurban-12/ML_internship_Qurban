@@ -170,7 +170,7 @@ capstone/
 The main analysis is available in:
 
 ```text
-notebooks/capstone.ipynb
+work/notebooks/capstone.ipynb
 ```
 
 ---
