@@ -1,611 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prioritizing Content with Observed Impression Decline</title>
 
-  <title>Prioritizing Content with Observed Impression Decline</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #222;
+  background: #f5f7fa;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.7;
-      color: #222;
-      background: #f5f7fa;
-    }
+.container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+}
 
-    .container {
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 0 24px;
-    }
+header, section {
+  background: white;
+  padding: 30px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
 
-    header {
-      background: white;
-      padding: 45px;
-      border-radius: 14px;
-      margin-bottom: 24px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    }
+h1 {
+  font-size: 36px;
+  margin-top: 0;
+}
 
-    h1 {
-      margin-top: 0;
-      font-size: 36px;
-      line-height: 1.2;
-    }
+h2 {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
 
-    h2 {
-      margin-top: 0;
-      font-size: 25px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 8px;
-    }
+h3 {
+  margin-top: 25px;
+}
 
-    h3 {
-      margin-top: 28px;
-    }
+.metric {
+  background: #f1f4f8;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
 
-    section {
-      background: white;
-      padding: 32px;
-      margin-bottom: 22px;
-      border-radius: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
 
-    .subtitle {
-      color: #666;
-      font-size: 18px;
-    }
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
 
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin: 25px 0;
-    }
+th {
+  background: #f1f4f8;
+}
 
-    .metric {
-      background: #f1f4f8;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
+a {
+  color: #1769aa;
+}
 
-    .metric strong {
-      display: block;
-      font-size: 28px;
-      margin-bottom: 5px;
-    }
-
-    .workflow {
-      font-size: 20px;
-      font-weight: bold;
-      text-align: center;
-      padding: 20px;
-      background: #f1f4f8;
-      border-radius: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-
-    th {
-      background: #f1f4f8;
-    }
-
-    .chart {
-      width: 100%;
-      max-width: 750px;
-      margin: 25px auto;
-      display: block;
-    }
-
-    a {
-      color: #1769aa;
-    }
-
-    footer {
-      text-align: center;
-      color: #666;
-      padding: 30px 0 50px;
-    }
-
-    @media (max-width: 700px) {
-      .metric-grid {
-        grid-template-columns: 1fr;
-      }
-
-      header, section {
-        padding: 24px;
-      }
-
-      h1 {
-        font-size: 28px;
-      }
-    }
-  </style>
+footer {
+  text-align: center;
+  color: #666;
+  padding: 30px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <header>
-    <h1>Prioritizing Content with Observed Impression Decline</h1>
-    <p class="subtitle">
-      A machine-learning decision-support study using search-content performance data
-    </p>
-    <p>
-      <strong>Author:</strong> Qurban Ali Rajar
-    </p>
-  </header>
-
-  <section>
-    <h2>Abstract</h2>
-
-    <p>
-      This study investigates whether search content with an observed impression decline can be prioritized for review using machine-learning ranking. The analysis uses 30,000 prepared content records covering 32 clients and evaluates search, competition, content, traffic, engagement, and freshness features. Two validation designs were compared: a standard random row split and a stricter client-grouped split in which test clients were completely unseen during training. The client-grouped evaluation achieved a ROC-AUC of 0.6157, with precision of 0.70, 0.72, and 0.70 among the top 20, 50, and 100 ranked records respectively. The results provide a directional ranking signal for review prioritization, but the model should be used as decision support rather than as an automatic predictor or decision-maker.
-    </p>
-  </section>
-
-  <section>
-    <h2>1. Introduction / Problem Statement</h2>
-
-    <p>
-      Content performance can change over time, creating a need to identify records
-      that may require closer review. The goal of this study is to investigate whether
-      machine-learning features can help prioritize content with an observed decline
-      in impressions.
-    </p>
-
-    <p>
-      The research question is:
-      <strong>
-        Can search content that is likely to experience an impression decline be
-        identified early enough to help prioritize content-review and refresh efforts,
-        and does the model generalize to clients that were not seen during training?
-      </strong>
-    </p>
-
-    <p>
-      The model is intended as a decision-support tool. A higher model score indicates
-      that an item receives a higher ranking for review, but it does not guarantee that
-      the content will decline or that a refresh will improve performance.
-    </p>
-  </section>
-
-  <section>
-    <h2>2. Data</h2>
-
-    <p>
-      This study uses the prepared feature dataset from the FlyRank ML Internship
-      dataset. The analysis contains 30,000 prepared content records covering 32 clients.
-    </p>
-
-    <p>
-      The prepared dataset contains search, competition, content, traffic, engagement,
-      freshness, and trend-related fields. The main observation windows include
-      90-day aggregate performance measures and separate recent and previous
-      30-day impression windows used to define the observed trend label.
-    </p>
-
-    <p>
-      Records were restricted to content with more than zero impressions in the
-      90-day window and at least 90 days of content age. Duplicate
-      <code>content_id</code> records were removed.
-    </p>
-
-    <div class="metric-grid">
-      <div class="metric">
-        <strong>30,000</strong>
-        Records
-      </div>
-
-      <div class="metric">
-        <strong>32</strong>
-        Clients
-      </div>
-
-      <div class="metric">
-        <strong>54.21%</strong>
-        Declining rate
-      </div>
-    </div>
-
-    <p>
-      The target variable is <code>is_declining_label</code>. A record is labeled
-      1 when its observed impression trend is classified as <code>down</code>,
-      and 0 otherwise.
-    </p>
-
-    <p>
-      The prepared dataset contains 16,262 declining records and 13,738
-      non-declining records.
-    </p>
-
-    <p>
-      <code>content_id</code> and <code>client_id</code> were retained for
-      identification and grouping but were not used as predictive model features.
-      Label-derived fields such as <code>trend_direction</code> and
-      <code>trend_pct</code> were excluded to avoid target leakage.
-    </p>
-
-    <p>
-      The analysis reports aggregate/model-level findings and does not include
-      client names or private search queries.
-    </p>
-  </section>
-
-  <section>
-    <h2>3. Methodology</h2>
-
-    <h3>Features</h3>
-
-    <p>
-      The model uses 26 features covering search demand, competition, content
-      characteristics, traffic, engagement, freshness, and content categories.
-      Numeric features include search volume, competition, word count,
-      90-day impressions and clicks, content age, CTR, average position,
-      engagement rate, and scroll rate.
-    </p>
-
-    <p>
-      Categorical features include competition level, content type, main intent,
-      age tier, freshness tier, word-count tier, impression tier, and position tier.
-    </p>
-
-    <h3>Label Definition</h3>
-
-    <p>
-      The target is <code>is_declining_label</code>. A record is labeled 1 when
-      its observed impression trend is classified as <code>down</code>.
-      The trend is calculated from the difference between recent and previous
-      30-day impression windows. A decline is defined when the change is below -20%.
-    </p>
-
-    <h3>Baseline</h3>
-
-    <p>
-      The main baseline is random performance, represented by an ROC-AUC of 0.50.
-      Ranking precision is also measured at the top 20, 50, and 100 records.
-    </p>
-
-    <h3>Validation Design</h3>
-
-    <p>
-      A random row split used 24,000 training rows and 6,000 test rows.
-      This split had 31 clients represented in both training and test data.
-    </p>
-
-    <p>
-      The primary evaluation used a client-grouped split. It trained on
-      23,837 records from 25 clients and tested on 6,163 records from
-      7 completely unseen clients. There were zero shared clients between
-      training and test sets.
-    </p>
-
-    <h3>Leakage Checks</h3>
-
-    <p>
-      Label-derived fields such as <code>trend_direction</code> and
-      <code>trend_pct</code> were excluded from the model. A deliberate
-      leakage test produced ROC-AUC of 1.00 when label-derived information
-      was included, compared with 0.6157 for the clean model.
-    </p>
-
-    <p>
-      The model features contained no missing values in the final prepared dataset.
-    </p>
-
-    <p>
-      One temporal limitation remains: several model inputs are 90-day aggregate
-      metrics, while the observed decline label is constructed from recent and
-      previous 30-day windows. These periods can overlap. Therefore, the current
-      evaluation measures classification of an observed decline rather than proving
-      completely future prediction.
-    </p>
-  </section>
-
-  <section>
-    <h2>4. Results</h2>
-
-    <h3>Primary Evaluation</h3>
-
-    <div class="metric-grid">
-      <div class="metric">
-        <strong>0.6157</strong>
-        Grouped ROC-AUC
-      </div>
-
-      <div class="metric">
-        <strong>0.70</strong>
-        P@20
-      </div>
-
-      <div class="metric">
-        <strong>0.72</strong>
-        P@50
-      </div>
-    </div>
-
-    <p>
-      On the unseen-client test set, the model achieved an ROC-AUC of
-      <strong>0.6157</strong>. This is above the random baseline of 0.50,
-      but the margin is modest.
-    </p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>Measured Result</th>
-          <th>Interpretation</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>ROC-AUC</td>
-          <td>0.6157</td>
-          <td>Primary client-grouped evaluation</td>
-        </tr>
-
-        <tr>
-          <td>P@20</td>
-          <td>0.70</td>
-          <td>14 of top 20 were declining</td>
-        </tr>
-
-        <tr>
-          <td>P@50</td>
-          <td>0.72</td>
-          <td>36 of top 50 were declining</td>
-        </tr>
-
-        <tr>
-          <td>P@100</td>
-          <td>0.70</td>
-          <td>70 of top 100 were declining</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h3>Random Split Comparison</h3>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Validation Design</th>
-          <th>Train Rows</th>
-          <th>Test Rows</th>
-          <th>Shared Clients</th>
-          <th>ROC-AUC</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>Random row split</td>
-          <td>24,000</td>
-          <td>6,000</td>
-          <td>31</td>
-          <td>0.7106</td>
-        </tr>
-
-        <tr>
-          <td>Client-grouped split</td>
-          <td>23,837</td>
-          <td>6,163</td>
-          <td>0</td>
-          <td>0.6157</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p>
-      The client-grouped ROC-AUC was 0.0949 lower than the random row-split
-      result. This indicates that the random row split provides a more optimistic
-      estimate when client patterns are shared between training and test data.
-    </p>
-
-    <h3>Interpretation</h3>
-
-    <p>
-      The results show that the model provides some ranking signal for prioritizing
-      content review, but the evidence does not support treating it as a strong
-      standalone predictor. Its most appropriate use is decision support:
-      ranking content for human review rather than automatically deciding which
-      content should be refreshed.
-    </p>
-  </section>
-
-  <section>
-    <h2>5. Limitations</h2>
-
-    <h3>Client Generalization</h3>
-
-    <p>
-      Performance is lower when clients are completely separated between training
-      and test data. The random row split achieved 0.7106 ROC-AUC, while the
-      client-grouped split achieved 0.6157.
-    </p>
-
-    <h3>Temporal Limitation</h3>
-
-    <p>
-      The model uses several 90-day aggregate performance features while the
-      decline label is constructed from recent and previous 30-day impression
-      windows. These periods can overlap.
-    </p>
-
-    <h3>Moderate Predictive Signal</h3>
-
-    <p>
-      The client-grouped ROC-AUC of 0.6157 is above the 0.50 random baseline
-      but remains modest.
-    </p>
-
-    <h3>False Positives and False Negatives</h3>
-
-    <p>
-      In the client-grouped test set, there were 3,014 false positives and
-      3,149 false negatives. Some content ranked for review will therefore
-      not be declining, while some declining content will not receive a high ranking.
-    </p>
-
-    <h3>Dataset Scope</h3>
-
-    <p>
-      The analysis is based on the available internship dataset and its observed
-      search-content performance fields. The findings should not automatically
-      be generalized to every website, industry, search environment, or future
-      time period.
-    </p>
-
-    <h3>Future Validation</h3>
-
-    <p>
-      A stronger future experiment would use strictly time-separated feature
-      and outcome windows, evaluate multiple future periods, and test the model
-      on additional unseen clients.
-    </p>
-  </section>
-
-  <section>
-    <h2>6. Ranked Recommendations</h2>
-
-    <h3>1. Review the highest-ranked content first</h3>
-
-    <p>
-      Start with the top-ranked records because the model identified a higher
-      concentration of observed declining content among them.
-      In the client-grouped test set, 70% of the top 20 ranked records were declining.
-    </p>
-
-    <h3>2. Check recent performance and search visibility</h3>
-
-    <p>
-      Review recent impressions, clicks, CTR, average position, and engagement
-      indicators before making a content change.
-    </p>
-
-    <h3>3. Prioritize content with sufficient history</h3>
-
-    <p>
-      The prepared dataset requires at least 90 days of content age and more
-      than zero 90-day impressions. Similar screening conditions should be
-      considered when applying this workflow.
-    </p>
-
-    <h3>4. Investigate the cause before refreshing</h3>
-
-    <p>
-      A high model score provides prioritization signal, not the reason for
-      decline. Review search intent, content relevance, freshness, ranking
-      position, and recent traffic changes before selecting an intervention.
-    </p>
-
-    <h3>5. Keep human review in the loop</h3>
-
-    <p>
-      Because the model produces both false positives and false negatives,
-      the ranking should not automatically trigger content changes.
-    </p>
-
-    <div class="workflow">
-      Rank → Review → Diagnose → Prioritize → Act → Measure
-    </div>
-
-    <p>
-      The model provides the ranking step. Human analysis determines whether
-      an intervention is appropriate, and subsequent performance should be
-      measured separately.
-    </p>
-  </section>
-
-  <section>
-    <h2>7. Reproducibility</h2>
-
-    <p>
-      The analysis is organized so that the feature-preparation pipeline and
-      evaluation steps can be rerun from the project repository.
-    </p>
-
-    <p>
-      The capstone notebook documents the research question, dataset preparation,
-      feature definitions, target construction, validation design, leakage checks,
-      model evaluation, limitations, and recommendations.
-    </p>
-
-    <p>
-      The prepared feature dataset is generated by the project's feature-preparation
-      script rather than being manually modified. The reported results use the
-      same prepared dataset and validation definitions documented in the notebook.
-    </p>
-
-    <p>
-      The primary reported result is the client-grouped evaluation:
-      <strong>ROC-AUC 0.6157</strong> on 6,163 test records from 7 clients
-      not present in training.
-    </p>
-  </section>
-
-  <section>
-    <h2>8. Artifacts</h2>
-
-    <p>
-      The project is supported by reproducible analysis artifacts, including
-      the capstone notebook, feature-preparation pipeline, prepared feature
-      dataset, and model evaluation results.
-    </p>
-
-    <ul>
-      <li>Capstone analysis notebook</li>
-      <li>Feature preparation script</li>
-      <li>Prepared feature dataset</li>
-      <li>Validation and leakage checks</li>
-      <li>Model evaluation results</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>9. Acknowledgments &amp; Data Credit</h2>
-
-    <p>
-      This work was completed as part of the FlyRank ML Internship and uses
-      the internship dataset provided for the research and modeling exercise.
-    </p>
-
-    <p>
-      <strong>
-        <a href="https://flyrank.ai" target="_blank" rel="noopener noreferrer">
-          Built on the FlyRank ML Internship dataset
-        </a>
-      </strong>
-    </p>
-
-    <p>
-      The analysis reports aggregate findings rather than client-specific
-      information and follows the public-safety requirements of the assignment.
-    </p>
-  </section>
-
-  <footer>
-    <p>
-      Machine-learning research project by Qurban Ali Rajar
-    </p>
-  </footer>
+<header>
+<h1>Prioritizing Content with Observed Impression Decline</h1>
+<p>A machine-learning decision-support study using search-content performance data</p>
+<p><strong>Author:</strong> Qurban Ali Rajar</p>
+</header>
+
+<section>
+<h2>Abstract</h2>
+<p>
+This study investigates whether search content with an observed impression decline
+can be prioritized for review using machine-learning ranking. The analysis uses
+30,000 prepared content records covering 32 clients and evaluates search,
+competition, content, traffic, engagement, and freshness features. Two validation
+designs were compared: a standard random row split and a stricter client-grouped
+split in which test clients were completely unseen during training. The
+client-grouped evaluation achieved a ROC-AUC of 0.6157, with precision of 0.70,
+0.72, and 0.70 among the top 20, 50, and 100 ranked records respectively. The
+results provide a directional ranking signal for review prioritization, but the
+model should be used as decision support rather than as an automatic predictor
+or decision-maker.
+</p>
+</section>
+
+<section>
+<h2>1. Introduction / Problem Statement</h2>
+
+<p>
+Content performance can change over time, creating a need to identify records
+that may require closer review. The goal of this study is to investigate whether
+machine-learning features can help prioritize content with an observed decline
+in impressions.
+</p>
+
+<p>
+<strong>Research question:</strong>
+Can search content that is likely to experience an impression decline be
+identified early enough to help prioritize content-review and refresh efforts,
+and does the model generalize to clients that were not seen during training?
+</p>
+
+<p>
+The model is intended as a decision-support tool. A higher model score indicates
+that an item receives a higher ranking for review, but it does not guarantee that
+the content will decline or that a refresh will improve performance.
+</p>
+</section>
+
+<section>
+<h2>2. Data</h2>
+
+<p>
+This study uses the prepared feature dataset from the FlyRank ML Internship
+dataset. The analysis contains 30,000 prepared content records covering 32 clients.
+</p>
+
+<p>
+The prepared dataset contains search, competition, content, traffic, engagement,
+freshness, and trend-related fields. The main observation windows include
+90-day aggregate performance measures and separate recent and previous 30-day
+impression windows used to define the observed trend label.
+</p>
+
+<div class="metric">
+<strong>30,000</strong> prepared records
+</div>
+
+<div class="metric">
+<strong>32</strong> clients
+</div>
+
+<div class="metric">
+<strong>54.21%</strong> declining rate
+</div>
+
+<p>
+Records were restricted to content with more than zero impressions in the
+90-day window and at least 90 days of content age. Duplicate content records
+were removed.
+</p>
+
+<p>
+The target variable is <code>is_declining_label</code>. A record is labeled
+1 when its observed impression trend is classified as <code>down</code>,
+and 0 otherwise.
+</p>
+
+<p>
+The prepared dataset contains 16,262 declining records and 13,738
+non-declining records.
+</p>
+
+<p>
+<code>content_id</code> and <code>client_id</code> were retained for
+identification and grouping but were not used as predictive model features.
+Label-derived fields such as <code>trend_direction</code> and
+<code>trend_pct</code> were excluded to avoid target leakage.
+</p>
+</section>
+
+<section>
+<h2>3. Methodology</h2>
+
+<h3>Features</h3>
+<p>
+The model uses 26 features covering search demand, competition, content
+characteristics, traffic, engagement, freshness, and content categories.
+Numeric features include search volume, competition, word count, 90-day
+impressions and clicks, content age, CTR, average position, engagement rate,
+and scroll rate.
+</p>
+
+<h3>Label Definition</h3>
+<p>
+The target is <code>is_declining_label</code>. A record is labeled 1 when
+its observed impression trend is classified as <code>down</code>. The trend
+is calculated from recent and previous 30-day impression windows. A decline
+is defined when the change is below -20%.
+</p>
+
+<h3>Baseline</h3>
+<p>
+The main baseline is random performance, represented by an ROC-AUC of 0.50.
+Ranking precision is also measured at the top 20, 50, and 100 records.
+</p>
+
+<h3>Validation Design</h3>
+<p>
+A random row split used 24,000 training rows and 6,000 test rows. This split
+had 31 clients represented in both training and test data.
+</p>
+
+<p>
+The primary evaluation used a client-grouped split. It trained on 23,837
+records from 25 clients and tested on 6,163 records from 7 completely unseen
+clients. There were zero shared clients between training and test sets.
+</p>
+
+<h3>Leakage Checks</h3>
+<p>
+Label-derived fields such as <code>trend_direction</code> and
+<code>trend_pct</code> were excluded from the model. A deliberate leakage
+test produced ROC-AUC of 1.00 when label-derived information was included,
+compared with 0.6157 for the clean model.
+</p>
+
+<p>
+One temporal limitation remains: several model inputs are 90-day aggregate
+metrics, while the observed decline label is constructed from recent and
+previous 30-day windows. These periods can overlap.
+</p>
+</section>
+
+<section>
+<h2>4. Results</h2>
+
+<div class="metric">
+<strong>Grouped ROC-AUC: 0.6157</strong>
+</div>
+
+<div class="metric">
+<strong>P@20: 0.70</strong> — 14 of top 20 were declining
+</div>
+
+<div class="metric">
+<strong>P@50: 0.72</strong> — 36 of top 50 were declining
+</div>
+
+<div class="metric">
+<strong>P@100: 0.70</strong> — 70 of top 100 were declining
+</div>
+
+<h3>Validation Comparison</h3>
+
+<table>
+<tr>
+<th>Validation Design</th>
+<th>Train Rows</th>
+<th>Test Rows</th>
+<th>Shared Clients</th>
+<th>ROC-AUC</th>
+</tr>
+
+<tr>
+<td>Random row split</td>
+<td>24,000</td>
+<td>6,000</td>
+<td>31</td>
+<td>0.7106</td>
+</tr>
+
+<tr>
+<td>Client-grouped split</td>
+<td>23,837</td>
+<td>6,163</td>
+<td>0</td>
+<td>0.6157</td>
+</tr>
+</table>
+
+<p>
+The client-grouped ROC-AUC was 0.0949 lower than the random row-split result.
+This indicates that the random row split provides a more optimistic estimate
+when client patterns are shared between training and test data.
+</p>
+
+<p>
+The results show that the model provides some ranking signal for prioritizing
+content review. Its appropriate use is decision support: ranking content for
+human review rather than automatically deciding which content should be refreshed.
+</p>
+</section>
+
+<section>
+<h2>5. Limitations</h2>
+
+<h3>Client Generalization</h3>
+<p>
+Performance is lower when clients are completely separated between training
+and test data.
+</p>
+
+<h3>Temporal Limitation</h3>
+<p>
+The model uses several 90-day aggregate performance features while the decline
+label is constructed from recent and previous 30-day impression windows.
+These periods can overlap.
+</p>
+
+<h3>Moderate Predictive Signal</h3>
+<p>
+The client-grouped ROC-AUC of 0.6157 is above the 0.50 random baseline but remains modest.
+</p>
+
+<h3>False Positives and False Negatives</h3>
+<p>
+In the client-grouped test set, there were 3,014 false positives and 3,149
+false negatives.
+</p>
+
+<h3>Future Validation</h3>
+<p>
+A stronger future experiment would use strictly time-separated feature and
+outcome windows, evaluate multiple future periods, and test the model on
+additional unseen clients.
+</p>
+</section>
+
+<section>
+<h2>6. Ranked Recommendations</h2>
+
+<h3>1. Review the highest-ranked content first</h3>
+<p>
+In the client-grouped test set, 70% of the top 20 ranked records were declining.
+</p>
+
+<h3>2. Check recent performance and search visibility</h3>
+<p>
+Review recent impressions, clicks, CTR, average position, and engagement
+indicators before making a content change.
+</p>
+
+<h3>3. Prioritize content with sufficient history</h3>
+<p>
+The prepared dataset requires at least 90 days of content age and more than
+zero 90-day impressions.
+</p>
+
+<h3>4. Investigate the cause before refreshing</h3>
+<p>
+A high model score provides prioritization signal, not the reason for decline.
+Review search intent, content relevance, freshness, ranking position, and
+recent traffic changes before selecting an intervention.
+</p>
+
+<h3>5. Keep human review in the loop</h3>
+<p>
+Because the model produces both false positives and false negatives, the
+ranking should not automatically trigger content changes.
+</p>
+
+<p>
+<strong>Rank → Review → Diagnose → Prioritize → Act → Measure</strong>
+</p>
+</section>
+
+<section>
+<h2>7. Artifacts</h2>
+
+<ul>
+<li>Capstone analysis notebook</li>
+<li>Feature preparation script</li>
+<li>Prepared feature dataset</li>
+<li>Validation and leakage checks</li>
+<li>Model evaluation results</li>
+</ul>
+</section>
+
+<section>
+<h2>8. Reproducibility</h2>
+
+<p>
+The analysis is organized so that the feature-preparation pipeline and
+evaluation steps can be rerun from the project repository.
+</p>
+
+<p>
+The primary reported result is the client-grouped evaluation:
+<strong>ROC-AUC 0.6157</strong> on 6,163 test records from 7 clients
+not present in training.
+</p>
+
+<p>
+<a href="https://github.com/qurban-12/ML_internship_Qurban">
+View the project repository
+</a>
+</p>
+</section>
+
+<section>
+<h2>9. Acknowledgments &amp; Data Credit</h2>
+
+<p>
+This work was completed as part of the FlyRank ML Internship and uses
+the internship dataset provided for research and modeling.
+</p>
+
+<p>
+<strong>
+<a href="https://flyrank.ai">
+Built on the FlyRank ML Internship dataset
+</a>
+</strong>
+</p>
+
+<p>
+The analysis reports aggregate findings rather than client-specific information.
+</p>
+</section>
+
+<footer>
+Machine-learning research project by Qurban Ali Rajar
+</footer>
 
 </div>
 
